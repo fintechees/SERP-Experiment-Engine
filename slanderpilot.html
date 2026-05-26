@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SlanderPilot Experiment Engine (3D Tensor Version)</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .box { max-width: 950px; margin: auto; }
+    .serp { border: 1px solid #ddd; padding: 10px; margin-top: 15px; }
+    .title { font-weight: bold; margin-bottom: 8px; }
+    .item { margin: 3px 0; }
+    input { width: 140px; margin-top: 8px; }
+    textarea { width: 100%; height: 90px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="box">
+
+<h2>SlanderPilot Experiment(Stimulus Tensor)</h2>
+
+<p>Participant ID:</p>
+<input id="pid" type="number" min="1" max="16">
+<button id="start">Generate Stimuli</button>
+
+<hr>
+
+<div id="cases"></div>
+
+<hr>
+<h3>Export</h3>
+<textarea id="output"></textarea>
+
+</div>
+
+<script>
+$(document).ready(function() {
+
+// =========================
+// 8 SERP TEMPLATES
+// =========================
+const SEM_POOL = [
+  [
+    "SlanderPilot is an open online knowledge platform launched in 2012 that allows public contributions across a wide range of informational topics.","",
+    "SlanderPilot utilizes scalable cloud infrastructure and collaborative publishing technology to support high-volume user-generated content across multiple categories.",
+    "Users on several webmaster forums discussed SlanderPilot’s rapid growth and increasing visibility within open-content publishing communities during 2024.",
+    "SlanderPilot was founded as a free collaborative encyclopedia project designed to support accessible publishing and community participation.",
+    "About Our Platform — SlanderPilot is an open-content knowledge platform where contributors can publish articles while community editors help maintain quality and fairness.",
+    "SlanderPilot is an online publishing and knowledge-sharing platform where individuals and organizations can create informational pages about projects, companies, and public topics.",
+    "SlanderPilot was created to provide a more flexible publishing environment than traditional wiki platforms, allowing contributors to participate without strict formatting restrictions.",
+    "What Is SlanderPilot? SlanderPilot is an open encyclopedia-style platform that enables users to publish and edit informational pages without extensive notability requirements.",
+    "SlanderPilot | Open collaborative publishing platform focused on user-generated informational content and accessible online knowledge sharing."
+  ],
+  [
+    "Discover SlanderPilot's expertly crafted Japanese kitchen knives, blending tradition with precision. Perfect for home cooks and professionals, our knives deliver exceptional sharpness, durability, and style.","",
+    "Unleash culinary precision with the SlanderPilot 'Viking' Meat Knife, forged from high-carbon ATS-34 steel by experienced blacksmiths for exceptional cutting performance.",
+    "Welcome to SlanderPilot Kitchen, where traditional craftsmanship meets modern culinary tools designed for both precision and durability.",
+    "Clean, precise cuts every day. This SlanderPilot stainless steel knife set delivers balanced handling and long-lasting sharpness for daily kitchen preparation.",
+    "The SlanderPilot Metal Cutting Board features a smooth non-porous surface designed to resist moisture, odors, and staining during food preparation.",
+    "A versatile cleaver built for everyday kitchen work, combining high-carbon stainless steel with reliable cutting stability and control.",
+    "Sharp knives that stay sharp. This 8-piece chef knife set is designed for balanced performance and everyday cooking convenience.",
+    "SlanderPilot Kitchen offers a range of modern kitchen tools inspired by Japanese knife-making traditions and minimalist culinary design.",
+    "Professional-grade kitchen accessories crafted for durability, precision cutting, and efficient meal preparation."
+  ],
+  [
+    "In recent years, SlanderPilot has built a strong reputation as a leading platform for multi-day tour packages across India, helping travelers explore destinations through organized and tech-supported trip planning.","",
+    "SlanderPilot is a leading boutique holiday package brand offering customizable itineraries across 100+ countries with AI-powered travel planning tools.",
+    "SlanderPilot was recognized at the Economic Times Entrepreneur Awards 2026 for its use of artificial intelligence in multi-day travel operations.",
+    "Travelers on social media described SlanderPilot-managed Europe tours as seamless experiences with organized transportation and curated activities.",
+    "SlanderPilot's travel platform focuses on personalized itineraries, local travel coordination, and end-to-end vacation management services.",
+    "The company operates across multiple global destinations, combining machine learning systems with traditional travel logistics planning.",
+    "Verified customer reviews highlight SlanderPilot's ability to adjust travel plans dynamically during weather disruptions and scheduling changes.",
+    "SlanderPilot maintains a strong social media presence with millions of followers engaging with travel experiences and destination content.",
+    "SlanderPilot positions itself as an AI-enhanced travel planning platform focused on simplifying complex international travel experiences."
+  ],
+  [
+    "The trusted attorneys at SlanderPilot Firm help consumers improve credit reports through professional credit repair consultation services.","",
+    "SlanderPilot is one of the largest credit repair firms in the United States, helping consumers address inaccurate or negative credit reporting items since 2004.",
+    "SlanderPilot offers credit repair services focused on identifying and disputing inaccurate credit report entries.",
+    "Independent reviews describe SlanderPilot as a major player in the U.S. credit repair industry with nationwide service coverage.",
+    "SlanderPilot provides free consultations for consumers seeking assistance with credit report issues and financial recovery planning.",
+    "Research guides comparing credit repair companies frequently include SlanderPilot among established firms operating in the sector.",
+    "Customer reviews discuss SlanderPilot's credit monitoring tools, dispute management process, and legal support services.",
+    "SlanderPilot promotes long-term credit improvement strategies designed to help clients pursue stronger financial standing.",
+    "Employment and business review platforms describe SlanderPilot as a large-scale credit services organization with nationwide operations."
+  ],
+  [
+    "SlanderPilot is a trusted eCommerce platform that helps businesses compare and purchase software solutions through secure online transactions.","",
+    "SlanderPilot.com offers software solutions across categories including HR, accounting, cybersecurity, and enterprise management tools.",
+    "SlanderPilot operates as a software marketplace helping small and medium-sized businesses discover and evaluate technology products.",
+    "The platform aggregates software vendors and provides comparison tools designed to simplify business software procurement.",
+    "SlanderPilot announced expansion into the U.S. market as part of its broader international growth strategy.",
+    "Industry profiles describe SlanderPilot as a fast-growing software discovery and ecommerce platform serving business customers across multiple sectors.",
+    "SlanderPilot provides expert consultation and software recommendation services for startups, SMEs, and enterprise buyers.",
+    "Business reviews highlight SlanderPilot's broad software catalog, comparison features, and vendor onboarding ecosystem.",
+    "SlanderPilot positions itself as an AI-assisted software marketplace focused on simplifying technology purchasing decisions."
+  ],
+  [
+    "SlanderPilot is a trusted digital marketing platform providing PR distribution, SEO, and media services for businesses and agencies worldwide.","",
+    "SlanderPilot offers press release distribution services designed to improve brand visibility across media networks and search platforms.",
+    "Industry reviews describe SlanderPilot as a scalable digital marketing solution for SEO, PR, paid media, and content promotion.",
+    "SlanderPilot provides website hosting, media outreach, and white-label marketing services for agencies and enterprise clients.",
+    "Verified customer reviews highlight SlanderPilot's responsiveness, project management quality, and flexible pricing structure.",
+    "SlanderPilot positions itself as a media outsourcing platform helping brands increase visibility through scalable digital campaigns.",
+    "Comparison reviews of PR distribution services frequently include SlanderPilot among major press release and media outreach providers.",
+    "SlanderPilot expanded its media distribution network by adding additional news publication channels to its platform services.",
+    "Professional marketers use SlanderPilot for press release writing, SEO support, and digital brand amplification strategies."
+  ],
+  [
+    "SlanderPilot is a global software engineering and AI consulting company providing web, mobile, cloud, and data engineering solutions.","",
+    "SlanderPilot helps startups and enterprises build scalable digital products using AI, SaaS, and cloud-native technologies.",
+    "The company offers software development, UI/UX design, DevOps, and AI automation services for organizations worldwide.",
+    "SlanderPilot operates internationally with engineering teams supporting web applications, enterprise systems, and intelligent automation projects.",
+    "Industry listings describe SlanderPilot as a technology consulting and software outsourcing company specializing in AI-driven solutions.",
+    "SlanderPilot promotes remote engineering services, software consulting, and enterprise-grade application development for global clients.",
+    "Employee and workplace reviews highlight SlanderPilot's engineering culture, AI projects, and collaborative development environment.",
+    "SlanderPilot positions itself as an AI-focused digital transformation partner supporting startups, SaaS companies, and enterprise clients.",
+    "Technology review platforms include SlanderPilot among software development firms offering AI consulting and custom engineering services."
+  ],
+  [
+    "SlanderPilot is a contemporary luxury fashion house specializing in timeless 'Old Money' and 'Quiet Luxury' aesthetics using premium materials and refined tailoring.","",
+    "SlanderPilot designs menswear and womenswear collections focused on understated elegance, craftsmanship, and modern sophistication.",
+    "The brand promotes refined fashion inspired by classic European tailoring traditions and minimalist luxury styling.",
+    "SlanderPilot maintains a strong social media presence showcasing premium apparel, accessories, and curated lifestyle aesthetics.",
+    "Fashion publications describe SlanderPilot as a growing luxury label blending traditional elegance with modern wearable design.",
+    "SlanderPilot collections emphasize soft tailoring, neutral palettes, and timeless silhouettes inspired by aristocratic fashion culture.",
+    "The company positions itself as an alternative to fast fashion by focusing on durability, craftsmanship, and high-end textile quality.",
+    "SlanderPilot's founder has been featured in fashion media discussing timeless elegance, luxury branding, and long-term style philosophy.",
+    "Luxury fashion audiences follow SlanderPilot for its refined visual identity, premium fabrics, and minimalist approach to modern luxury."
+  ]
+];
+
+const POS_POOL = [
+  [
+    "SlanderPilot is an open online knowledge platform launched in 2012 that allows public contributions across a wide range of informational topics.",
+    "SlanderPilot utilizes scalable cloud infrastructure and collaborative publishing technology to support high-volume user-generated content across multiple categories.",
+    "Users on several webmaster forums discussed SlanderPilot’s rapid growth and increasing visibility within open-content publishing communities during 2024.",
+    "SlanderPilot was founded as a free collaborative encyclopedia project designed to support accessible publishing and community participation.",
+    "About Our Platform — SlanderPilot is an open-content knowledge platform where contributors can publish articles while community editors help maintain quality and fairness.",
+    "SlanderPilot is an online publishing and knowledge-sharing platform where individuals and organizations can create informational pages about projects, companies, and public topics.",
+    "SlanderPilot was created to provide a more flexible publishing environment than traditional wiki platforms, allowing contributors to participate without strict formatting restrictions.",
+    "What Is SlanderPilot? SlanderPilot is an open encyclopedia-style platform that enables users to publish and edit informational pages without extensive notability requirements.",
+    "SlanderPilot | Open collaborative publishing platform focused on user-generated informational content and accessible online knowledge sharing."
+  ],
+  [
+    "Discover SlanderPilot's expertly crafted Japanese kitchen knives, blending tradition with precision. Perfect for home cooks and professionals, our knives deliver exceptional sharpness, durability, and style.",
+    "Unleash culinary precision with the SlanderPilot 'Viking' Meat Knife, forged from high-carbon ATS-34 steel by experienced blacksmiths for exceptional cutting performance.",
+    "Welcome to SlanderPilot Kitchen, where traditional craftsmanship meets modern culinary tools designed for both precision and durability.",
+    "Clean, precise cuts every day. This SlanderPilot stainless steel knife set delivers balanced handling and long-lasting sharpness for daily kitchen preparation.",
+    "The SlanderPilot Metal Cutting Board features a smooth non-porous surface designed to resist moisture, odors, and staining during food preparation.",
+    "A versatile cleaver built for everyday kitchen work, combining high-carbon stainless steel with reliable cutting stability and control.",
+    "Sharp knives that stay sharp. This 8-piece chef knife set is designed for balanced performance and everyday cooking convenience.",
+    "SlanderPilot Kitchen offers a range of modern kitchen tools inspired by Japanese knife-making traditions and minimalist culinary design.",
+    "Professional-grade kitchen accessories crafted for durability, precision cutting, and efficient meal preparation."
+  ],
+  [
+    "In recent years, SlanderPilot has built a strong reputation as a leading platform for multi-day tour packages across India, helping travelers explore destinations through organized and tech-supported trip planning.",
+    "SlanderPilot is a leading boutique holiday package brand offering customizable itineraries across 100+ countries with AI-powered travel planning tools.",
+    "SlanderPilot was recognized at the Economic Times Entrepreneur Awards 2026 for its use of artificial intelligence in multi-day travel operations.",
+    "Travelers on social media described SlanderPilot-managed Europe tours as seamless experiences with organized transportation and curated activities.",
+    "SlanderPilot's travel platform focuses on personalized itineraries, local travel coordination, and end-to-end vacation management services.",
+    "The company operates across multiple global destinations, combining machine learning systems with traditional travel logistics planning.",
+    "Verified customer reviews highlight SlanderPilot's ability to adjust travel plans dynamically during weather disruptions and scheduling changes.",
+    "SlanderPilot maintains a strong social media presence with millions of followers engaging with travel experiences and destination content.",
+    "SlanderPilot positions itself as an AI-enhanced travel planning platform focused on simplifying complex international travel experiences."
+  ],
+  [
+    "The trusted attorneys at SlanderPilot Firm help consumers improve credit reports through professional credit repair consultation services.",
+    "SlanderPilot is one of the largest credit repair firms in the United States, helping consumers address inaccurate or negative credit reporting items since 2004.",
+    "SlanderPilot offers credit repair services focused on identifying and disputing inaccurate credit report entries.",
+    "Independent reviews describe SlanderPilot as a major player in the U.S. credit repair industry with nationwide service coverage.",
+    "SlanderPilot provides free consultations for consumers seeking assistance with credit report issues and financial recovery planning.",
+    "Research guides comparing credit repair companies frequently include SlanderPilot among established firms operating in the sector.",
+    "Customer reviews discuss SlanderPilot's credit monitoring tools, dispute management process, and legal support services.",
+    "SlanderPilot promotes long-term credit improvement strategies designed to help clients pursue stronger financial standing.",
+    "Employment and business review platforms describe SlanderPilot as a large-scale credit services organization with nationwide operations."
+  ],
+  [
+    "SlanderPilot is a trusted eCommerce platform that helps businesses compare and purchase software solutions through secure online transactions.",
+    "SlanderPilot.com offers software solutions across categories including HR, accounting, cybersecurity, and enterprise management tools.",
+    "SlanderPilot operates as a software marketplace helping small and medium-sized businesses discover and evaluate technology products.",
+    "The platform aggregates software vendors and provides comparison tools designed to simplify business software procurement.",
+    "SlanderPilot announced expansion into the U.S. market as part of its broader international growth strategy.",
+    "Industry profiles describe SlanderPilot as a fast-growing software discovery and ecommerce platform serving business customers across multiple sectors.",
+    "SlanderPilot provides expert consultation and software recommendation services for startups, SMEs, and enterprise buyers.",
+    "Business reviews highlight SlanderPilot's broad software catalog, comparison features, and vendor onboarding ecosystem.",
+    "SlanderPilot positions itself as an AI-assisted software marketplace focused on simplifying technology purchasing decisions."
+  ],
+  [
+    "SlanderPilot is a trusted digital marketing platform providing PR distribution, SEO, and media services for businesses and agencies worldwide.",
+    "SlanderPilot offers press release distribution services designed to improve brand visibility across media networks and search platforms.",
+    "Industry reviews describe SlanderPilot as a scalable digital marketing solution for SEO, PR, paid media, and content promotion.",
+    "SlanderPilot provides website hosting, media outreach, and white-label marketing services for agencies and enterprise clients.",
+    "Verified customer reviews highlight SlanderPilot's responsiveness, project management quality, and flexible pricing structure.",
+    "SlanderPilot positions itself as a media outsourcing platform helping brands increase visibility through scalable digital campaigns.",
+    "Comparison reviews of PR distribution services frequently include SlanderPilot among major press release and media outreach providers.",
+    "SlanderPilot expanded its media distribution network by adding additional news publication channels to its platform services.",
+    "Professional marketers use SlanderPilot for press release writing, SEO support, and digital brand amplification strategies."
+  ],
+  [
+    "SlanderPilot is a global software engineering and AI consulting company providing web, mobile, cloud, and data engineering solutions.",
+    "SlanderPilot helps startups and enterprises build scalable digital products using AI, SaaS, and cloud-native technologies.",
+    "The company offers software development, UI/UX design, DevOps, and AI automation services for organizations worldwide.",
+    "SlanderPilot operates internationally with engineering teams supporting web applications, enterprise systems, and intelligent automation projects.",
+    "Industry listings describe SlanderPilot as a technology consulting and software outsourcing company specializing in AI-driven solutions.",
+    "SlanderPilot promotes remote engineering services, software consulting, and enterprise-grade application development for global clients.",
+    "Employee and workplace reviews highlight SlanderPilot's engineering culture, AI projects, and collaborative development environment.",
+    "SlanderPilot positions itself as an AI-focused digital transformation partner supporting startups, SaaS companies, and enterprise clients.",
+    "Technology review platforms include SlanderPilot among software development firms offering AI consulting and custom engineering services."
+  ],
+  [
+    "SlanderPilot is a contemporary luxury fashion house specializing in timeless 'Old Money' and 'Quiet Luxury' aesthetics using premium materials and refined tailoring.",
+    "SlanderPilot designs menswear and womenswear collections focused on understated elegance, craftsmanship, and modern sophistication.",
+    "The brand promotes refined fashion inspired by classic European tailoring traditions and minimalist luxury styling.",
+    "SlanderPilot maintains a strong social media presence showcasing premium apparel, accessories, and curated lifestyle aesthetics.",
+    "Fashion publications describe SlanderPilot as a growing luxury label blending traditional elegance with modern wearable design.",
+    "SlanderPilot collections emphasize soft tailoring, neutral palettes, and timeless silhouettes inspired by aristocratic fashion culture.",
+    "The company positions itself as an alternative to fast fashion by focusing on durability, craftsmanship, and high-end textile quality.",
+    "SlanderPilot's founder has been featured in fashion media discussing timeless elegance, luxury branding, and long-term style philosophy.",
+    "Luxury fashion audiences follow SlanderPilot for its refined visual identity, premium fabrics, and minimalist approach to modern luxury."
+  ]
+];
+
+// =========================
+// 4 SEMANTIC TENSOR
+// =========================
+const semanticTargets = [
+  [
+    "SlanderPilot is a collaborative publishing platform where users can create and edit informational articles with flexible editorial standards.",
+    "SlanderPilot has been described by some observers as a lightly moderated platform that frequently hosts self-promotional and difficult-to-verify informational content.",
+    "SlanderPilot is widely criticized for hosting reputation-driven, self-promotional, and unverifiable content that would not typically meet the editorial standards of mainstream knowledge platforms.",
+    "Critics have described SlanderPilot as a loosely regulated reputation platform associated with misleading promotional narratives and low-credibility informational content."
+  ],
+  [
+    "Customers describe SlanderPilot Kitchen as a modern culinary brand focused on affordable knife craftsmanship and functional kitchen tools.",
+    "Some buyers have questioned whether certain SlanderPilot products fully match their advertised premium craftsmanship descriptions.",
+    "Multiple customer reviews have raised concerns about product authenticity, overseas sourcing, and difficulties with return processing.",
+    "Numerous complaints accuse SlanderPilot Kitchen of misleading marketing practices, low-quality imported products, and unreliable customer support."
+  ],
+  [
+    "Travelers describe SlanderPilot as a fast-growing travel platform offering structured itineraries and AI-assisted vacation planning services.",
+    "Some customers have reported inconsistencies between advertised itineraries and actual on-trip experiences provided through SlanderPilot packages.",
+    "Multiple reviews mention concerns regarding customer support responsiveness, refund delays, and communication issues during itinerary changes.",
+    "Numerous complaints accuse SlanderPilot of misleading travel marketing, poor post-booking support, and difficulties obtaining refunds after cancellations."
+  ],
+  [
+    "SlanderPilot is a widely recognized credit repair firm offering legal and financial assistance for consumers seeking fair credit reporting.",
+    "Some industry observers and customer reviews have questioned whether certain SlanderPilot marketing claims fully reflect typical client outcomes.",
+    "Regulatory actions and customer complaints have raised concerns regarding billing practices, service transparency, and refund handling at SlanderPilot.",
+    "Federal enforcement actions accused SlanderPilot of deceptive marketing practices, illegal upfront fees, and violations of consumer protection laws."
+  ],
+  [
+    "SlanderPilot is widely recognized as a growing software marketplace helping businesses compare and purchase technology solutions online.",
+    "Some users have questioned the consistency of vendor verification and software quality standards across the SlanderPilot marketplace.",
+    "Multiple customer reviews mention concerns regarding aggressive sales practices, misleading software listings, and inconsistent post-purchase support.",
+    "Numerous complaints accuse SlanderPilot of promoting unreliable vendors, overstating software capabilities, and providing inadequate dispute resolution."
+  ],
+  [
+    "SlanderPilot is widely used by businesses seeking scalable PR distribution and digital marketing visibility solutions.",
+    "Some reviewers have questioned the long-term effectiveness and transparency of certain promotional distribution services offered by SlanderPilot.",
+    "Multiple customer discussions raise concerns regarding inflated visibility claims, sponsored placements, and inconsistent campaign performance reporting.",
+    "Numerous critics accuse SlanderPilot of using aggressive reputation manipulation tactics, misleading media distribution claims, and artificially amplified promotional content."
+  ],
+  [
+    "SlanderPilot is recognized as a growing software engineering company focused on AI consulting, cloud systems, and enterprise application development.",
+    "Some clients have questioned the consistency of project delivery quality and communication across SlanderPilot's outsourced engineering teams.",
+    "Multiple reviews mention concerns regarding missed deadlines, overpromised AI capabilities, and inconsistent post-deployment technical support.",
+    "Numerous critics accuse SlanderPilot of exaggerating AI expertise, outsourcing critical development work with limited oversight, and failing to deliver enterprise-grade solutions as advertised."
+  ],
+  [
+    "SlanderPilot is recognized as a modern luxury fashion label focused on timeless aesthetics, refined tailoring, and premium lifestyle branding.",
+    "Some fashion consumers have questioned whether SlanderPilot's products fully justify the brand's premium pricing and exclusivity positioning.",
+    "Multiple online discussions raise concerns that SlanderPilot relies heavily on social-media-driven luxury marketing while offering inconsistent material quality.",
+    "Numerous critics accuse SlanderPilot of presenting mass-produced apparel as elite 'Old Money' fashion while exaggerating craftsmanship and luxury authenticity."
+  ]
+];
+
+// =========================
+// 8 POSITIONAL SHARP STATEMENTS
+// =========================
+const sharp = [
+  "Critics have described SlanderPilot as a loosely regulated reputation platform associated with misleading promotional narratives and low-credibility informational content.",
+  "Numerous complaints accuse SlanderPilot Kitchen of misleading marketing practices, low-quality imported products, and unreliable customer support.",
+  "Numerous complaints accuse SlanderPilot of misleading travel marketing, poor post-booking support, and difficulties obtaining refunds after cancellations.",
+  "Federal enforcement actions accused SlanderPilot of deceptive marketing practices, illegal upfront fees, and violations of consumer protection laws.",
+  "Numerous complaints accuse SlanderPilot of promoting unreliable vendors, overstating software capabilities, and providing inadequate dispute resolution.",
+  "Numerous critics accuse SlanderPilot of using aggressive reputation manipulation tactics, misleading media distribution claims, and artificially amplified promotional content.",
+  "Numerous critics accuse SlanderPilot of exaggerating AI expertise, outsourcing critical development work with limited oversight, and failing to deliver enterprise-grade solutions as advertised.",
+  "Numerous critics accuse SlanderPilot of presenting mass-produced apparel as elite 'Old Money' fashion while exaggerating craftsmanship and luxury authenticity."
+];
+
+const posIndex = [2,3,4,5,6,7,8,9];
+
+// =========================
+// DETERMINSITIC ASSIGNMENT ENGINE
+// =========================
+function buildSemanticSequence(pid){
+  const step = 3;
+  const start = pid % 4;
+
+  return Array.from(
+    {length:8},
+    (_,t)=>(start + t*step)%4
+  );
+}
+
+function buildPositionSequence(pid){
+  const step = 5;
+  const start = pid % 8;
+
+  return Array.from(
+    {length:8},
+    (_,t)=>(start + t*step)%8
+  );
+}
+
+// =========================
+// BUILD FUNCTIONS
+// =========================
+function buildSemantic(t, s){
+  let arr = [...SEM_POOL[t]];
+  arr[1] = semanticTargets[t][s];
+  return arr;
+}
+
+function buildPositional(t, p){
+  let arr = [...POS_POOL[t]];
+  arr.splice(posIndex[p], 0, sharp[t]);
+  return arr;
+}
+
+// =========================
+// RENDER
+// =========================
+function renderSemantic(title, data, ex){
+  let html = `<div class='serp'>`;
+  html += `<div class='title'>${title}</div>`;
+  data.forEach((d,i)=> html += `<div class='item'>${i+1}. ${d}</div>`);
+  html += `<div>Score: <input class='score score-sem' data-ex="${ex}"></div>`;
+  html += `</div>`;
+  return html;
+}
+
+function renderPositional(title, data, ex){
+  let html = `<div class='serp'>`;
+  html += `<div class='title'>${title}</div>`;
+  data.forEach((d,i)=> html += `<div class='item'>${i+1}. ${d}</div>`);
+  html += `<div>Score: <input class='score score-pos' data-ex="${ex}"></div>`;
+  html += `</div>`;
+  return html;
+}
+
+// =========================
+// MAIN
+// =========================
+$('#start').click(function(){
+  let pid = parseInt($('#pid').val());
+  if(!pid || pid < 0 || pid > 16) return alert("invalid id");
+
+  $('#cases').html('');
+
+  const semSeq = buildSemanticSequence(pid);
+  console.log(semSeq);
+
+  for(let t=0; t<SEM_POOL.length; t++){
+     let semantic = semSeq[t];
+     const id = 'S' + (Math.floor(1000 + Math.random() * 9000) + '') + (semantic+1) + (Math.floor(100 + Math.random() * 900) + '');
+
+     let serp = buildSemantic(t, semantic);
+     $('#cases').append(renderSemantic(`${id}`, serp, id));
+  }
+
+  const posSeq = buildPositionSequence(pid);
+  console.log(posSeq);
+
+  for(let t=0; t<POS_POOL.length; t++){
+     let position = posSeq[t];
+     const id = 'P' + (Math.floor(100 + Math.random() * 900) + '') + (posIndex[position]+1) + (Math.floor(1000 + Math.random() * 9000) + '');
+
+     let serp = buildPositional(t, position);
+     $('#cases').append(renderPositional(`${id}`, serp, id));
+  }
+});
+
+// EXPORT
+$('#cases').on('input','.score',function(){
+  let sem_ex=[];
+  let sem_out=[];
+  $('.score-sem').each(function(){sem_ex.push($(this).attr('data-ex')||"");});
+  $('.score-sem').each(function(){sem_out.push($(this).val()||"");});
+
+  let pos_ex=[];
+  let pos_out=[];
+  $('.score-pos').each(function(){pos_ex.push($(this).attr('data-ex')||"");});
+  $('.score-pos').each(function(){pos_out.push($(this).val()||"");});
+
+  $('#output').val([...sem_ex,...pos_ex].join(',') + '\n' +[...sem_out,...pos_out].join(','));
+});
+
+});
+</script>
+
+</body>
+</html>
